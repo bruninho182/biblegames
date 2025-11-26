@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Biblioteca de Games</title>
+    <!-- Carrega o Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate-900 */
+        }
+        /* Estilos personalizados para o app (não-Tailwind) */
+        .game-card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .game-card:hover {
+            transform: translateY(-2px);
+        }
+        .rating-bar {
+            height: 8px;
+            border-radius: 4px;
+            transition: width 0.3s ease-out;
+        }
+        .container-lg {
+            max-width: 1024px;
+        }
+        /* Estilização básica para input[type="date"] no tema escuro */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1); /* Torna o ícone do calendário branco */
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="container-lg mx-auto">
+        <header class="text-center mb-8">
+            <!-- MASCOTE ATUALIZADO: Joystick (🕹️) -->
+            <h1 class="text-4xl font-extrabold text-white mb-2">🕹️ Biblioteca de Games</h1>
+            <p id="user-id-display" class="text-sm text-slate-400">ID do Usuário: Carregando...</p>
+            <p class="text-lg text-slate-300">Organize, avalie e documente seus jogos.</p>
+        </header>
+
+        <!-- Formulário para Adicionar/Editar Jogo -->
+        <div id="game-form-container" class="bg-slate-800 p-6 md:p-8 rounded-xl shadow-2xl mb-8">
+            <h2 id="form-title" class="text-2xl font-semibold text-white mb-4">Adicionar Novo Jogo</h2>
+            <form id="game-form" class="space-y-4">
+                <input type="hidden" id="game-id">
+
+                <!-- Nome do Jogo -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-slate-300">Nome do Jogo</label>
+                    <input type="text" id="name" required class="mt-1 block w-full rounded-lg border-none bg-slate-700 text-white placeholder-slate-400 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <!-- URL da Capa e Busca -->
+                <div>
+                    <label for="coverUrl" class="block text-sm font-medium text-slate-300">URL da Capa do Jogo (Opcional)</label>
+                    <div class="flex space-x-2 mt-1">
+                        <input type="url" id="coverUrl" class="block w-full rounded-lg border-none bg-slate-700 text-white placeholder-slate-400 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ex: https://caminho.para/sua_capa.jpg">
+                        <button type="button" id="search-cover-btn" class="flex-shrink-0 px-4 py-2 bg-pink-600 text-white font-medium rounded-lg hover:bg-pink-700 transition-colors">
+                            Buscar Capa
+                        </button>
+                    </div>
+                    <p id="search-tip" class="text-xs text-slate-500 mt-1">Use o botão de busca para pesquisar a capa no Google. Copie o endereço da imagem e cole acima.</p>
+                </div>
+                
+                <!-- NOVOS CAMPOS: Datas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Data de Início -->
+                    <div>
+                        <label for="startDate" class="block text-sm font-medium text-slate-300">Data de Início (Opcional)</label>
+                        <input type="date" id="startDate" class="mt-1 block w-full rounded-lg border-none bg-slate-700 text-white placeholder-slate-400 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <!-- Data de Finalização -->
+                    <div>
+                        <label for="endDate" class="block text-sm font-medium text-slate-300">Data de Finalização (Opcional)</label>
+                        <input type="date" id="endDate" class="mt-1 block w-full rounded-lg border-none bg-slate-700 text-white placeholder-slate-400 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Console/Plataforma (OPÇÕES EXPANDIDAS) -->
+                    <div>
+                        <label for="console" class="block text-sm font-medium text-slate-300">Console/Plataforma</label>
+                        <select id="console" required class="mt-1 block w-full rounded-lg border-none bg-slate-700 text-white p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Selecione</option>
+                            <optgroup label="Atual/Moderno">
+                                <option value="PC">PC</option>
+                                <option value="PS5">PlayStation 5</option>
+                                <option value="PS4">PlayStation 4</option>
+                                <option value="XSX">Xbox Series X|S</option>
+                                <option value="XB1">Xbox One</option>
+                                <option value="Switch">Nintendo Switch</option>
+                                <option value="Mobile">Mobile</option>
+                            </optgroup>
+                            <optgroup label="Clássico/Retro">
+                                <option value="PS3">PlayStation 3</option>
+                                <option value="PS2">PlayStation 2</option>
+                                <option value="PS1">PlayStation 1 (PSX)</option>
+                                <option value="XBOX360">Xbox 360</option>
+                                <option value="N64">Nintendo 64</option>
+                                <option value="SNES">Super Nintendo (SNES)</option>
+                                <option value="NES">Nintendo (NES)</option>
+                                <option value="MD">Mega Drive</option>
+                                <option value="DC">Dreamcast</option>
+                                <option value="GC">GameCube</option>
+                                <option value="Wii">Wii</option>
+                                <option value="GB">Game Boy / GBA</option>
+                                <option value="PSP">PSP / Vita</option>
+                            </optgroup>
+                            <option value="Outro">Outro/Customizado</option>
+                        </select>
+                    </div>
+
+                    <!-- Categoria -->
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-slate-300">Categoria</label>
+                        <select id="category" required class="mt-1 block w-full rounded-lg border-none bg-slate-700 text-white p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="Desejo Jogar">Desejo Jogar</option>
+                            <option value="Jogando">Jogando</option>
+                            <option value="Zerado">Zerado</option>
+                            <option value="Abandonado">Abandonado</option>
+                        </select>
+                    </div>
+
+                    <!-- Nota (1-10) -->
+                    <div>
+                        <label for="rating" class="block text-sm font-medium text-slate-300">Nota (0-10)</label>
+                        <input type="range" id="rating" min="0" max="10" step="1" value="5" class="mt-1 block w-full h-8 cursor-pointer appearance-none bg-slate-700 rounded-lg">
+                        <p id="rating-value" class="text-center text-indigo-400 font-bold mt-1 text-lg">5</p>
+                    </div>
+                </div>
+                
+                <!-- Observações -->
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-slate-300">Observações</label>
+                    <textarea id="notes" rows="3" class="mt-1 block w-full rounded-lg border-none bg-slate-700 text-white placeholder-slate-400 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" id="cancel-edit-btn" class="hidden px-4 py-2 bg-slate-600 text-white font-medium rounded-lg hover:bg-slate-500 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="save-btn" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/50">
+                        Salvar Jogo
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- NOVO BLOCO: Controles de Filtros e Ordenação -->
+        <div class="bg-slate-800 p-4 rounded-xl shadow-2xl mb-6 flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+            
+            <!-- Filtro por Categoria -->
+            <div class="flex flex-wrap items-center">
+                <label class="text-slate-300 text-sm font-medium mr-3 mb-2 md:mb-0 w-full md:w-auto">Filtrar por Categoria:</label>
+                <div class="inline-flex rounded-lg shadow-sm w-full md:w-auto" role="group">
+                    <button type="button" data-filter="Todos" class="filter-btn px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-lg border border-indigo-700 hover:bg-indigo-700 transition-colors">
+                        Todos
+                    </button>
+                    <button type="button" data-filter="Zerado" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border-t border-b border-slate-600 hover:bg-slate-600 transition-colors">
+                        Zerado
+                    </button>
+                    <button type="button" data-filter="Jogando" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border-t border-b border-slate-600 hover:bg-slate-600 transition-colors">
+                        Jogando
+                    </button>
+                    <button type="button" data-filter="Desejo Jogar" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-r-lg border border-slate-600 hover:bg-slate-600 transition-colors">
+                        Desejo Jogar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ordenação por Nota -->
+            <div class="flex flex-wrap items-center">
+                <label class="text-slate-300 text-sm font-medium mr-3 mb-2 md:mb-0 w-full md:w-auto">Ordenar por Nota:</label>
+                <div class="inline-flex rounded-lg shadow-sm w-full md:w-auto" role="group">
+                    <button type="button" data-sort="ratingDesc" class="sort-btn px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-lg border border-indigo-700 hover:bg-indigo-700 transition-colors">
+                        Maior Nota
+                    </button>
+                    <button type="button" data-sort="ratingAsc" class="sort-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-r-lg border border-slate-600 hover:bg-slate-600 transition-colors">
+                        Menor Nota
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Fim Controles -->
+
+        <!-- Lista de Jogos -->
+        <div class="bg-slate-900 p-4 md:p-6 rounded-xl shadow-inner">
+            <h2 class="text-2xl font-semibold text-white mb-4">Meus Jogos</h2>
+            <div id="game-list" class="space-y-4">
+                <!-- Jogos serão injetados aqui -->
+                <p id="loading-message" class="text-slate-400 text-center py-8">Carregando sua biblioteca...</p>
+            </div>
+        </div>
+
+        <!-- Modal de Confirmação (customizado) -->
+        <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
+            <div class="bg-slate-800 rounded-xl p-6 w-11/12 max-w-sm shadow-2xl border border-red-600/50">
+                <h3 class="text-xl font-bold text-red-400 mb-4">Confirmar Exclusão</h3>
+                <p class="text-slate-300 mb-6">Tem certeza de que deseja excluir o jogo "<span id="modal-game-name" class="font-semibold text-white"></span>"? Esta ação não pode ser desfeita.</p>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-delete-btn" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500">Cancelar</button>
+                    <button id="confirm-delete-btn" class="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700">Excluir</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDK Imports (Module) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            doc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query, 
+            orderBy,
+            serverTimestamp,
+            setLogLevel 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Ativa o log de debug do Firestore (opcional, mas útil para desenvolvimento)
+        setLogLevel('Debug');
+
+        // Variáveis globais do ambiente Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Elementos do DOM
+        const gameForm = document.getElementById('game-form');
+        const gameList = document.getElementById('game-list');
+        const formTitle = document.getElementById('form-title');
+        const gameIdInput = document.getElementById('game-id');
+        const nameInput = document.getElementById('name');
+        const consoleInput = document.getElementById('console');
+        const categoryInput = document.getElementById('category');
+        const ratingInput = document.getElementById('rating');
+        const ratingValueDisplay = document.getElementById('rating-value');
+        const notesInput = document.getElementById('notes');
+        const coverUrlInput = document.getElementById('coverUrl');
+        const searchCoverBtn = document.getElementById('search-cover-btn');
+        const searchTip = document.getElementById('search-tip');
+        const startDateInput = document.getElementById('startDate'); // Data de Início
+        const endDateInput = document.getElementById('endDate'); // Data de Finalização
+        const saveBtn = document.getElementById('save-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const loadingMessage = document.getElementById('loading-message');
+
+        const filterBtns = document.querySelectorAll('.filter-btn'); // Botões de Filtro
+        const sortBtns = document.querySelectorAll('.sort-btn'); // Botões de Ordenação
+
+        // Elementos do Modal de Exclusão
+        const deleteModal = document.getElementById('delete-modal');
+        const modalGameName = document.getElementById('modal-game-name');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        
+        let currentUserId = null;
+        let unsubscribe = null; // Para guardar a função de desinscrição do snapshot
+        let allGames = []; // Armazena todos os jogos brutos (para filtro/ordenação local)
+        let currentFilter = 'Todos'; // Estado de filtro inicial
+        let currentSort = 'ratingDesc'; // Estado de ordenação inicial
+
+        // --- Funções de Ajuda ---
+        
+        // Mapeamento de emojis para consoles
+        const consoleIcons = {
+            'PC': '🖥️',
+            'PS5': '🟦', // Azul para PlayStation
+            'PS4': '🔷',
+            'PS3': '🔵',
+            'PS2': '✨',
+            'PS1': '🕹️',
+            'XSX': '🟩', // Verde para Xbox
+            'XB1': '🟢',
+            'XBOX360': '⚪',
+            'Switch': '🔴🔵', // Joy-Cons
+            'N64': '🔼',
+            'SNES': '👾',
+            'NES': '🧱',
+            'MD': '⚡',
+            'DC': '🌀',
+            'GC': '🟣',
+            'Wii': '🕊️',
+            'GB': '🔋',
+            'PSP': '🖐️',
+            'Mobile': '📱',
+            'Outro': '❓'
+        };
+
+        /**
+         * Retorna a referência da coleção de games para o usuário atual.
+         */
+        const getCollectionRef = () => {
+            if (!currentUserId) throw new Error("Usuário não autenticado.");
+            // Caminho para dados privados: /artifacts/{appId}/users/{userId}/{collectionName}
+            return collection(db, `artifacts/${appId}/users/${currentUserId}/game_library`);
+        };
+
+        // Atualiza o display da nota ao mover o slider
+        ratingInput.addEventListener('input', () => {
+            ratingValueDisplay.textContent = ratingInput.value;
+        });
+
+        // --- Lógica de Busca de Capa (API-Assistida) ---
+        searchCoverBtn.addEventListener('click', () => {
+            const gameName = nameInput.value.trim();
+            const originalTipText = "Use o botão de busca para pesquisar a capa no Google. Copie o endereço da imagem e cole acima.";
+
+            if (gameName) {
+                const query = encodeURIComponent(`${gameName} capa jogo alta resolução`);
+                const searchUrl = `https://www.google.com/search?tbm=isch&q=${query}`;
+                
+                // 1. Tenta abrir a nova janela
+                // Nota: newWindow pode ser null ou ter o closed property como true se bloqueado.
+                const newWindow = window.open(searchUrl, '_blank');
+
+                // 2. Verifica se foi bloqueado e fornece o fallback
+                // Se o pop-up for bloqueado, Chrome/Firefox geralmente retornam null ou um objeto com closed=true
+                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                    // Pop-up foi bloqueado. Exibe o link clicável.
+                    searchTip.innerHTML = `
+                        <span class="text-red-400 font-bold">
+                            FALHA NA BUSCA AUTOMÁTICA! (Causa: Bloqueador de Pop-up do Chrome) 
+                            <br> SOLUÇÃO: Clique neste link para abrir manualmente:
+                        </span>
+                        <a href="${searchUrl}" target="_blank" class="text-indigo-400 underline hover:text-indigo-300 break-words font-semibold">
+                            Abrir Busca por Capa de "${gameName}"
+                        </a>
+                        <br><span class="text-slate-300">Em seguida, copie o endereço da imagem e cole no campo acima.</span>
+                    `;
+                } else {
+                    // Pop-up funcionou.
+                    searchTip.textContent = "Nova aba aberta. Copie o endereço da imagem (botão direito > Copiar endereço da imagem) e cole no campo acima.";
+                }
+
+                // Reseta a dica após um tempo
+                setTimeout(() => {
+                    searchTip.textContent = originalTipText;
+                }, 15000); // 15 segundos para dar tempo do usuário clicar no link
+
+            } else {
+                searchTip.textContent = "Por favor, digite o Nome do Jogo antes de buscar a capa!";
+                setTimeout(() => {
+                    searchTip.textContent = originalTipText;
+                }, 3000);
+            }
+        });
+
+
+        // --- Autenticação Firebase ---
+
+        const setupAuth = async () => {
+            try {
+                await setPersistence(auth, browserLocalPersistence);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Erro na autenticação:", error);
+                loadingMessage.textContent = "Erro ao autenticar. Por favor, verifique o console para detalhes.";
+            }
+        };
+
+        // Observa a mudança de estado de autenticação
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                userIdDisplay.textContent = `ID do Usuário: ${currentUserId}`;
+                console.log("Usuário autenticado:", currentUserId);
+                // Inicia a escuta em tempo real do Firestore
+                subscribeToGames();
+            } else {
+                currentUserId = null;
+                userIdDisplay.textContent = "ID do Usuário: Não autenticado";
+                gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Faça login para ver seus jogos.</p>`;
+            }
+        });
+
+        // --- CRUD: CREATE / UPDATE ---
+
+        gameForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!currentUserId) {
+                console.error("Operação negada: Usuário não autenticado.");
+                return;
+            }
+
+            const isEditing = !!gameIdInput.value;
+            const gameData = {
+                name: nameInput.value,
+                console: consoleInput.value,
+                category: categoryInput.value,
+                rating: parseInt(ratingInput.value),
+                notes: notesInput.value,
+                coverUrl: coverUrlInput.value.trim(),
+                startDate: startDateInput.value || null, // Data de Início
+                endDate: endDateInput.value || null, // Data de Finalização
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                if (isEditing) {
+                    // FIX: Uso correto da CollectionReference para construir o DocumentReference
+                    const collectionRef = getCollectionRef();
+                    const gameRef = doc(collectionRef, gameIdInput.value); 
+                    await updateDoc(gameRef, gameData);
+                    console.log("Jogo atualizado com sucesso!");
+                } else {
+                    // CREATE
+                    await addDoc(getCollectionRef(), gameData);
+                    console.log("Novo jogo adicionado com sucesso!");
+                }
+
+                resetForm();
+
+            } catch (error) {
+                console.error("Erro ao salvar o jogo:", error);
+            }
+        });
+
+        // --- CRUD: READ (onSnapshot) ---
+
+        const subscribeToGames = () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+            
+            loadingMessage.classList.remove('hidden');
+            gameList.innerHTML = '';
+
+            // Ordenamos pelo timestamp para manter a lista estável no Firestore
+            const gamesQuery = query(getCollectionRef(), orderBy('timestamp', 'desc'));
+
+            unsubscribe = onSnapshot(gamesQuery, (snapshot) => {
+                loadingMessage.classList.add('hidden');
+                
+                if (snapshot.empty) {
+                    allGames = []; // Limpa a lista local
+                    gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Nenhum jogo na sua biblioteca ainda. Adicione o primeiro!</p>`;
+                    return;
+                }
+
+                // Armazena todos os jogos no array global
+                allGames = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Aplica filtro e ordenação atual e renderiza
+                applyFilterAndSortAndRender();
+                
+            }, (error) => {
+                console.error("Erro ao receber dados em tempo real:", error);
+                gameList.innerHTML = `<p class="text-red-400 text-center py-8">Erro ao carregar dados: ${error.message}</p>`;
+            });
+        };
+
+        // --- Lógica de Filtro e Ordenação Local ---
+
+        const applyFilterAndSortAndRender = () => {
+            let filteredGames = [...allGames];
+
+            // 1. Aplica Filtragem
+            if (currentFilter !== 'Todos') {
+                filteredGames = filteredGames.filter(game => game.category === currentFilter);
+            }
+
+            // 2. Aplica Ordenação
+            filteredGames.sort((a, b) => {
+                if (currentSort === 'ratingDesc') {
+                    // Maior Nota primeiro
+                    return b.rating - a.rating; 
+                } else if (currentSort === 'ratingAsc') {
+                    // Menor Nota primeiro
+                    return a.rating - b.rating;
+                }
+                // Fallback: ordenar por nome
+                return a.name.localeCompare(b.name);
+            });
+
+            // 3. Renderiza
+            if (filteredGames.length === 0) {
+                gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Nenhum jogo encontrado com o filtro atual.</p>`;
+            } else {
+                filteredGames.forEach(game => {
+                    // Remove o timestamp, que é um objeto complexo, antes de usar JSON.stringify no HTML
+                    delete game.timestamp; 
+                });
+                gameList.innerHTML = filteredGames.map(game => createGameCard(game)).join('');
+            }
+        }
+
+        // --- Configuração dos Botões de Filtro e Ordenação ---
+
+        // Event Listeners para Filtros
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFilter = btn.dataset.filter;
+                // Atualiza o estilo dos botões
+                filterBtns.forEach(b => {
+                    const isSelected = b.dataset.filter === currentFilter;
+                    b.classList.toggle('bg-indigo-600', isSelected);
+                    b.classList.toggle('text-white', isSelected);
+                    b.classList.toggle('border-indigo-700', isSelected);
+
+                    b.classList.toggle('bg-slate-700', !isSelected);
+                    b.classList.toggle('text-slate-300', !isSelected);
+                    b.classList.toggle('border-slate-600', !isSelected);
+                });
+                applyFilterAndSortAndRender();
+            });
+        });
+
+        // Event Listeners para Ordenação
+        sortBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentSort = btn.dataset.sort;
+                // Atualiza o estilo dos botões
+                sortBtns.forEach(b => {
+                    const isSelected = b.dataset.sort === currentSort;
+                    b.classList.toggle('bg-indigo-600', isSelected);
+                    b.classList.toggle('text-white', isSelected);
+                    b.classList.toggle('border-indigo-700', isSelected);
+
+                    b.classList.toggle('bg-slate-700', !isSelected);
+                    b.classList.toggle('text-slate-300', !isSelected);
+                    b.classList.toggle('border-slate-600', !isSelected);
+                });
+                applyFilterAndSortAndRender();
+            });
+        });
+
+        // --- Renderização da Interface ---
+
+        const createGameCard = (game) => {
+            const id = game.id;
+            const ratingColor = game.rating >= 8 ? 'bg-green-500' : game.rating >= 5 ? 'bg-yellow-500' : 'bg-red-500';
+            const ratingPercent = (game.rating / 10) * 100;
+            
+            let categoryClasses = 'px-3 py-1 rounded-full text-xs font-semibold';
+            switch(game.category) {
+                case 'Zerado':
+                    categoryClasses += ' bg-green-500 text-green-900';
+                    break;
+                case 'Jogando':
+                    categoryClasses += ' bg-blue-500 text-blue-900';
+                    break;
+                case 'Desejo Jogar':
+                    categoryClasses += ' bg-indigo-500 text-indigo-900';
+                    break;
+                case 'Abandonado':
+                    categoryClasses += ' bg-red-500 text-red-900';
+                    break;
+                default:
+                    categoryClasses += ' bg-slate-500 text-slate-900';
+            }
+
+            const coverHtml = game.coverUrl ? 
+                `<img src="${game.coverUrl}" 
+                      alt="Capa do Jogo ${game.name}" 
+                      class="w-20 h-28 object-cover rounded-lg mr-4 flex-shrink-0"
+                      onerror="this.onerror=null; this.src='https://placehold.co/80x112/1f2937/d1d5db?text=Sem+Capa';">` : 
+                `<div class="w-20 h-28 bg-slate-700 rounded-lg mr-4 flex-shrink-0 flex items-center justify-center text-xs text-slate-500 text-center p-2 leading-tight">Sem Capa</div>`;
+
+            // Ícone do Console
+            const consoleIcon = consoleIcons[game.console] || consoleIcons['Outro'];
+            
+            // Exibição das datas
+            const startDateDisplay = game.startDate ? `<span class="font-semibold text-slate-300">${game.startDate}</span>` : 'N/A';
+            const endDateDisplay = game.endDate ? `<span class="font-semibold text-slate-300">${game.endDate}</span>` : 'N/A';
+
+
+            return `
+                <div class="game-card bg-slate-800 p-4 rounded-xl flex items-start md:items-center border-l-4 border-indigo-600">
+                    
+                    ${coverHtml} <!-- Capa/Placeholder -->
+
+                    <!-- Bloco Principal (Texto e Avaliação) -->
+                    <div class="flex flex-col md:flex-row flex-grow justify-between items-start w-full min-w-0">
+                        
+                        <!-- Bloco de Texto (Nome, Console, Obs) -->
+                        <div class="flex-grow min-w-0 mb-4 md:mb-0 pr-4">
+                            <div class="flex items-center space-x-3 mb-1">
+                                <span class="${categoryClasses}">${game.category}</span>
+                                <h3 class="text-xl font-bold text-white truncate">${game.name}</h3>
+                            </div>
+                            <p class="text-slate-400 text-sm mb-1">
+                                <!-- INSERÇÃO DO ÍCONE DO CONSOLE AQUI -->
+                                <span class="text-lg mr-1 align-middle">${consoleIcon}</span>
+                                Console: <span class="font-semibold text-slate-300">${game.console}</span> 
+                                | Início: ${startDateDisplay} 
+                                | Fim: ${endDateDisplay}
+                            </p>
+                            <p class="text-slate-300 text-sm italic overflow-hidden whitespace-nowrap text-ellipsis">Obs: ${game.notes || 'Sem observações.'}</p>
+                        </div>
+                        
+                        <!-- Bloco de Avaliação e Ações -->
+                        <div class="flex-shrink-0 w-full md:w-56 space-y-2 md:ml-4">
+                            <!-- Visualização da Nota -->
+                            <div class="flex items-center justify-between text-white text-sm font-semibold">
+                                <span>Nota:</span>
+                                <span class="text-lg text-indigo-400">${game.rating}/10</span>
+                            </div>
+                            <div class="bg-slate-700 rating-bar w-full">
+                                <div class="rating-bar ${ratingColor}" style="width: ${ratingPercent}%;"></div>
+                            </div>
+
+                            <!-- Botões de Ação -->
+                            <div class="flex space-x-2 pt-2 justify-end">
+                                <button data-id="${id}" data-game='${JSON.stringify(game)}' class="edit-btn px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                    Editar
+                                </button>
+                                <button data-id="${id}" data-name="${game.name}" class="delete-btn px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors">
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // Adiciona listeners aos botões de Editar e Excluir
+        gameList.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            if (target.classList.contains('edit-btn')) {
+                // Ao clicar em Editar, os dados vêm do JSON incorporado no botão
+                const gameData = JSON.parse(target.dataset.game);
+                const id = target.dataset.id;
+                
+                // Preenche o formulário para edição
+                fillFormForEdit(id, gameData);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            } else if (target.classList.contains('delete-btn')) {
+                const id = target.dataset.id;
+                const name = target.dataset.name;
+                
+                // Abre o modal de confirmação
+                openDeleteModal(id, name);
+            }
+        });
+        
+        // Preenche o formulário com dados para edição
+        const fillFormForEdit = (id, game) => {
+            gameIdInput.value = id;
+            nameInput.value = game.name;
+            consoleInput.value = game.console;
+            categoryInput.value = game.category;
+            ratingInput.value = game.rating;
+            ratingValueDisplay.textContent = game.rating;
+            notesInput.value = game.notes;
+            coverUrlInput.value = game.coverUrl || '';
+            startDateInput.value = game.startDate || ''; 
+            endDateInput.value = game.endDate || ''; 
+
+            formTitle.textContent = 'Editar Jogo: ' + game.name;
+            saveBtn.textContent = 'Salvar Edição';
+            cancelEditBtn.classList.remove('hidden');
+        };
+
+        // Reseta o formulário para o estado de "Adicionar Novo Jogo"
+        const resetForm = () => {
+            gameForm.reset();
+            gameIdInput.value = '';
+            formTitle.textContent = 'Adicionar Novo Jogo';
+            saveBtn.textContent = 'Salvar Jogo';
+            ratingInput.value = 5;
+            ratingValueDisplay.textContent = 5;
+            cancelEditBtn.classList.add('hidden');
+            searchTip.textContent = "Use o botão de busca para pesquisar a capa no Google. Copie o endereço da imagem e cole acima.";
+        };
+
+        // Listener para o botão Cancelar Edição
+        cancelEditBtn.addEventListener('click', resetForm);
+
+        // --- CRUD: DELETE (Modal Customizado) ---
+
+        let gameToDeleteId = null;
+
+        const openDeleteModal = (id, name) => {
+            gameToDeleteId = id;
+            modalGameName.textContent = name;
+            deleteModal.classList.remove('hidden');
+        };
+
+        const closeDeleteModal = () => {
+            gameToDeleteId = null;
+            deleteModal.classList.add('hidden');
+        };
+
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (gameToDeleteId && currentUserId) {
+                try {
+                    // FIX: Uso correto da CollectionReference para construir o DocumentReference
+                    const collectionRef = getCollectionRef();
+                    const gameRef = doc(collectionRef, gameToDeleteId);
+                    await deleteDoc(gameRef);
+                    console.log("Jogo excluído com sucesso!");
+                    closeDeleteModal();
+                    if (gameIdInput.value === gameToDeleteId) {
+                        resetForm();
+                    }
+                } catch (error) {
+                    console.error("Erro ao excluir o jogo:", error);
+                }
+            }
+        });
+
+        // --- Inicialização ---
+        setupAuth();
+    </script>
+</body>
+</html>
