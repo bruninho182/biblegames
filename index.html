@@ -236,7 +236,18 @@
 
         // Variáveis globais do ambiente Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        
+        // NOVO FALLBACK PARA AMBIENTE LOCAL (FIX para o erro "projectId not provided")
+        const defaultFirebaseConfig = {
+            projectId: "local-dev-project", // Chave dummy para permitir a inicialização local
+            apiKey: "dummy-key",
+            authDomain: "local-dev-domain",
+            storageBucket: "local-dev-bucket",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:dummy",
+        };
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' && __firebase_config ? __firebase_config : JSON.stringify(defaultFirebaseConfig));
+        
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Inicializa o Firebase
@@ -263,7 +274,7 @@
         const saveBtn = document.getElementById('save-btn');
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         const userIdDisplay = document.getElementById('user-id-display');
-        const loadingMessage = document.getElementById('loading-message');
+        let loadingMessage = document.getElementById('loading-message'); // Adicionei let para que possamos manipular
 
         const filterBtns = document.querySelectorAll('.filter-btn'); // Botões de Filtro
         const sortBtns = document.querySelectorAll('.sort-btn'); // Botões de Ordenação
@@ -331,11 +342,9 @@
                 const searchUrl = `https://www.google.com/search?tbm=isch&q=${query}`;
                 
                 // 1. Tenta abrir a nova janela
-                // Nota: newWindow pode ser null ou ter o closed property como true se bloqueado.
                 const newWindow = window.open(searchUrl, '_blank');
 
                 // 2. Verifica se foi bloqueado e fornece o fallback
-                // Se o pop-up for bloqueado, Chrome/Firefox geralmente retornam null ou um objeto com closed=true
                 if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
                     // Pop-up foi bloqueado. Exibe o link clicável.
                     searchTip.innerHTML = `
@@ -371,6 +380,7 @@
 
         const setupAuth = async () => {
             try {
+                // Tenta definir a persistência local (pode falhar no ambiente file://)
                 await setPersistence(auth, browserLocalPersistence);
 
                 if (initialAuthToken) {
@@ -379,8 +389,15 @@
                     await signInAnonymously(auth);
                 }
             } catch (error) {
-                console.error("Erro na autenticação:", error);
-                loadingMessage.textContent = "Erro ao autenticar. Por favor, verifique o console para detalhes.";
+                console.error("ERRO CRÍTICO NA AUTENTICAÇÃO/CONFIGURAÇÃO:", error);
+                
+                // Exibe a mensagem de erro no corpo do app
+                loadingMessage.classList.remove('hidden');
+                loadingMessage.classList.add('text-red-400', 'font-bold');
+                loadingMessage.innerHTML = `
+                    ERRO CRÍTICO AO CONECTAR:<br>
+                    Por favor, verifique o **Console do Desenvolvedor** (F12) para a mensagem de erro exata do Firebase.
+                `;
             }
         };
 
@@ -390,12 +407,23 @@
                 currentUserId = user.uid;
                 userIdDisplay.textContent = `ID do Usuário: ${currentUserId}`;
                 console.log("Usuário autenticado:", currentUserId);
+                
+                // Remove qualquer mensagem de erro de autenticação anterior no loadingMessage
+                if (loadingMessage) {
+                    loadingMessage.classList.remove('text-red-400', 'font-bold');
+                    loadingMessage.textContent = "Carregando sua biblioteca...";
+                }
+                
                 // Inicia a escuta em tempo real do Firestore
                 subscribeToGames();
             } else {
                 currentUserId = null;
                 userIdDisplay.textContent = "ID do Usuário: Não autenticado";
-                gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Faça login para ver seus jogos.</p>`;
+                if (loadingMessage) {
+                     // Garante que se a lista não carregar, pelo menos o prompt de login/uso apareça
+                    loadingMessage.classList.remove('hidden');
+                    loadingMessage.textContent = "Faça login para ver seus jogos.";
+                }
             }
         });
 
@@ -450,7 +478,7 @@
             }
             
             loadingMessage.classList.remove('hidden');
-            gameList.innerHTML = '';
+            gameList.innerHTML = ''; // Limpa a lista antes de carregar
 
             // Ordenamos pelo timestamp para manter a lista estável no Firestore
             const gamesQuery = query(getCollectionRef(), orderBy('timestamp', 'desc'));
