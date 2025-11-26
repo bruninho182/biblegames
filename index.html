@@ -215,45 +215,76 @@
 
     <!-- Firebase SDK Imports (Module) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            doc, 
-            updateDoc, 
-            deleteDoc, 
-            onSnapshot, 
-            query, 
-            orderBy,
-            serverTimestamp,
-            setLogLevel 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Importa apenas as funções necessárias (se a inicialização for chamada)
+        let initializeApp, getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence, setLogLevel;
 
-        // Ativa o log de debug do Firestore (opcional, mas útil para desenvolvimento)
-        setLogLevel('Debug');
+        // Tenta importar as dependências do Firebase.
+        try {
+            const firebaseAppModule = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+            initializeApp = firebaseAppModule.initializeApp;
+
+            const firestoreModule = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            getFirestore = firestoreModule.getFirestore;
+            collection = firestoreModule.collection;
+            addDoc = firestoreModule.addDoc;
+            doc = firestoreModule.doc;
+            updateDoc = firestoreModule.updateDoc;
+            deleteDoc = firestoreModule.deleteDoc;
+            onSnapshot = firestoreModule.onSnapshot;
+            query = firestoreModule.query;
+            orderBy = firestoreModule.orderBy;
+            serverTimestamp = firestoreModule.serverTimestamp;
+            setLogLevel = firestoreModule.setLogLevel;
+
+            const authModule = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+            getAuth = authModule.getAuth;
+            signInAnonymously = authModule.signInAnonymously;
+            signInWithCustomToken = authModule.signInWithCustomToken;
+            onAuthStateChanged = authModule.onAuthStateChanged;
+            setPersistence = authModule.setPersistence;
+            browserLocalPersistence = authModule.browserLocalPersistence;
+
+            // setLogLevel('Debug'); // Deixamos o debug desativado para evitar poluição no console no modo local
+        } catch (e) {
+            console.warn("Firebase imports skipped. Running in Local/Offline mode.");
+        }
+
 
         // Variáveis globais do ambiente Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         
-        // NOVO FALLBACK PARA AMBIENTE LOCAL (FIX para o erro "projectId not provided")
+        // Configurações e detecção de modo local
+        const DUMMY_API_KEY = "dummy-key";
         const defaultFirebaseConfig = {
-            projectId: "local-dev-project", // Chave dummy para permitir a inicialização local
-            apiKey: "dummy-key",
-            authDomain: "local-dev-domain",
-            storageBucket: "local-dev-bucket",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:dummy",
+            projectId: "local-dev-project", 
+            apiKey: DUMMY_API_KEY, 
+            // O restante das chaves é irrelevante no modo dev local, pois não faremos a conexão.
         };
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' && __firebase_config ? __firebase_config : JSON.stringify(defaultFirebaseConfig));
         
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Inicializa o Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        // Variável de controle: se a chave API for a dummy, estamos no modo de desenvolvimento local.
+        const isLocalDevMode = firebaseConfig.apiKey === DUMMY_API_KEY;
+
+
+        // Variáveis de Firebase (serão nulas no modo local)
+        let app = null;
+        let db = null;
+        let auth = null;
+        
+        // Inicialização Condicional
+        if (!isLocalDevMode) {
+            // MODO PRODUÇÃO (Canvas/Ambiente com chaves reais): Inicializa o Firebase
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+            } catch (error) {
+                console.error("Falha ao inicializar o Firebase em modo PROD:", error);
+            }
+        }
+        
         
         // Elementos do DOM
         const gameForm = document.getElementById('game-form');
@@ -274,7 +305,7 @@
         const saveBtn = document.getElementById('save-btn');
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         const userIdDisplay = document.getElementById('user-id-display');
-        let loadingMessage = document.getElementById('loading-message'); // Adicionei let para que possamos manipular
+        let loadingMessage = document.getElementById('loading-message');
 
         const filterBtns = document.querySelectorAll('.filter-btn'); // Botões de Filtro
         const sortBtns = document.querySelectorAll('.sort-btn'); // Botões de Ordenação
@@ -286,25 +317,24 @@
         const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
         
         let currentUserId = null;
-        let unsubscribe = null; // Para guardar a função de desinscrição do snapshot
-        let allGames = []; // Armazena todos os jogos brutos (para filtro/ordenação local)
-        let currentFilter = 'Todos'; // Estado de filtro inicial
-        let currentSort = 'ratingDesc'; // Estado de ordenação inicial
+        let unsubscribe = null; 
+        let allGames = []; 
+        let currentFilter = 'Todos'; 
+        let currentSort = 'ratingDesc'; 
 
-        // --- Funções de Ajuda ---
+        // --- Funções de Ajuda e Configurações ---
         
-        // Mapeamento de emojis para consoles
         const consoleIcons = {
             'PC': '🖥️',
-            'PS5': '🟦', // Azul para PlayStation
+            'PS5': '🟦',
             'PS4': '🔷',
             'PS3': '🔵',
             'PS2': '✨',
             'PS1': '🕹️',
-            'XSX': '🟩', // Verde para Xbox
+            'XSX': '🟩',
             'XB1': '🟢',
             'XBOX360': '⚪',
-            'Switch': '🔴🔵', // Joy-Cons
+            'Switch': '🔴🔵',
             'N64': '🔼',
             'SNES': '👾',
             'NES': '🧱',
@@ -318,16 +348,11 @@
             'Outro': '❓'
         };
 
-        /**
-         * Retorna a referência da coleção de games para o usuário atual.
-         */
         const getCollectionRef = () => {
-            if (!currentUserId) throw new Error("Usuário não autenticado.");
-            // Caminho para dados privados: /artifacts/{appId}/users/{userId}/{collectionName}
+            if (!currentUserId || !db || !collection) throw new Error("Recursos do Firebase não disponíveis.");
             return collection(db, `artifacts/${appId}/users/${currentUserId}/game_library`);
         };
 
-        // Atualiza o display da nota ao mover o slider
         ratingInput.addEventListener('input', () => {
             ratingValueDisplay.textContent = ratingInput.value;
         });
@@ -341,12 +366,9 @@
                 const query = encodeURIComponent(`${gameName} capa jogo alta resolução`);
                 const searchUrl = `https://www.google.com/search?tbm=isch&q=${query}`;
                 
-                // 1. Tenta abrir a nova janela
                 const newWindow = window.open(searchUrl, '_blank');
 
-                // 2. Verifica se foi bloqueado e fornece o fallback
                 if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                    // Pop-up foi bloqueado. Exibe o link clicável.
                     searchTip.innerHTML = `
                         <span class="text-red-400 font-bold">
                             FALHA NA BUSCA AUTOMÁTICA! (Causa: Bloqueador de Pop-up do Chrome) 
@@ -358,14 +380,12 @@
                         <br><span class="text-slate-300">Em seguida, copie o endereço da imagem e cole no campo acima.</span>
                     `;
                 } else {
-                    // Pop-up funcionou.
                     searchTip.textContent = "Nova aba aberta. Copie o endereço da imagem (botão direito > Copiar endereço da imagem) e cole no campo acima.";
                 }
 
-                // Reseta a dica após um tempo
                 setTimeout(() => {
                     searchTip.textContent = originalTipText;
-                }, 15000); // 15 segundos para dar tempo do usuário clicar no link
+                }, 15000); 
 
             } else {
                 searchTip.textContent = "Por favor, digite o Nome do Jogo antes de buscar a capa!";
@@ -376,56 +396,92 @@
         });
 
 
-        // --- Autenticação Firebase ---
+        // --- Autenticação / Inicialização ---
 
-        const setupAuth = async () => {
-            try {
-                // Tenta definir a persistência local (pode falhar no ambiente file://)
-                await setPersistence(auth, browserLocalPersistence);
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("ERRO CRÍTICO NA AUTENTICAÇÃO/CONFIGURAÇÃO:", error);
+        const initializeAppMode = async () => {
+            if (isLocalDevMode) {
+                // MODO DE DESENVOLVIMENTO LOCAL
+                currentUserId = 'LOCAL_DEV_USER_ID';
+                userIdDisplay.textContent = 'ID do Usuário: MODO LOCAL / OFFLINE';
+                userIdDisplay.classList.add('text-yellow-400', 'font-bold');
                 
-                // Exibe a mensagem de erro no corpo do app
-                loadingMessage.classList.remove('hidden');
-                loadingMessage.classList.add('text-red-400', 'font-bold');
-                loadingMessage.innerHTML = `
-                    ERRO CRÍTICO AO CONECTAR:<br>
-                    Por favor, verifique o **Console do Desenvolvedor** (F12) para a mensagem de erro exata do Firebase.
-                `;
+                loadLocalData(); // Carrega dados do localStorage
+            
+            } else {
+                // MODO PRODUÇÃO (Com chaves reais)
+                if (!auth) {
+                    // Se o Auth falhou na inicialização (erro de rede/configuração)
+                    currentUserId = 'PROD_FAILURE';
+                    userIdDisplay.textContent = 'ID do Usuário: FALHA DE CONEXÃO';
+                    loadingMessage.classList.add('text-red-400', 'font-bold');
+                    loadingMessage.innerHTML = 'FALHA DE CONEXÃO: Não foi possível conectar ao Firebase. Verifique sua rede.';
+                    return;
+                }
+
+                // Tenta autenticação normal do Firebase
+                try {
+                    await setPersistence(auth, browserLocalPersistence);
+
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                } catch (error) {
+                    console.error("ERRO CRÍTICO NA AUTENTICAÇÃO/CONFIGURAÇÃO (PROD):", error);
+                    loadingMessage.classList.remove('hidden');
+                    loadingMessage.classList.add('text-red-400', 'font-bold');
+                    loadingMessage.innerHTML = 'FALHA DE AUTENTICAÇÃO. Verifique o console.';
+                }
             }
         };
 
-        // Observa a mudança de estado de autenticação
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                userIdDisplay.textContent = `ID do Usuário: ${currentUserId}`;
-                console.log("Usuário autenticado:", currentUserId);
-                
-                // Remove qualquer mensagem de erro de autenticação anterior no loadingMessage
-                if (loadingMessage) {
-                    loadingMessage.classList.remove('text-red-400', 'font-bold');
-                    loadingMessage.textContent = "Carregando sua biblioteca...";
+        // Observa a mudança de estado de autenticação (só ativa em modo PROD)
+        if (!isLocalDevMode && typeof onAuthStateChanged !== 'undefined') {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userIdDisplay.textContent = `ID do Usuário: ${currentUserId}`;
+                    console.log("Usuário autenticado:", currentUserId);
+                    
+                    if (loadingMessage) {
+                        loadingMessage.classList.remove('text-red-400', 'font-bold');
+                        loadingMessage.textContent = "Carregando sua biblioteca...";
+                    }
+                    
+                    subscribeToGames(); // Inicia a escuta em tempo real do Firestore (PROD)
+                } else {
+                    currentUserId = null;
+                    userIdDisplay.textContent = "ID do Usuário: Não autenticado";
+                    if (loadingMessage) {
+                        loadingMessage.classList.remove('hidden');
+                        loadingMessage.textContent = "Faça login para ver seus jogos.";
+                    }
                 }
-                
-                // Inicia a escuta em tempo real do Firestore
-                subscribeToGames();
-            } else {
-                currentUserId = null;
-                userIdDisplay.textContent = "ID do Usuário: Não autenticado";
-                if (loadingMessage) {
-                     // Garante que se a lista não carregar, pelo menos o prompt de login/uso apareça
-                    loadingMessage.classList.remove('hidden');
-                    loadingMessage.textContent = "Faça login para ver seus jogos.";
-                }
+            });
+        }
+
+
+        // --- Persistência Local (usada apenas no MODO LOCAL/OFFLINE) ---
+
+        const saveLocalData = () => {
+            if (isLocalDevMode) {
+                localStorage.setItem('localGames', JSON.stringify(allGames));
+                applyFilterAndSortAndRender(); 
             }
-        });
+        };
+
+        const loadLocalData = () => {
+            const data = localStorage.getItem('localGames');
+            if (data) {
+                allGames = JSON.parse(data);
+                applyFilterAndSortAndRender();
+            } else {
+                allGames = [];
+            }
+            loadingMessage.classList.add('hidden');
+        };
 
         // --- CRUD: CREATE / UPDATE ---
 
@@ -438,6 +494,8 @@
             }
 
             const isEditing = !!gameIdInput.value;
+            const now = new Date().toISOString();
+            
             const gameData = {
                 name: nameInput.value,
                 console: consoleInput.value,
@@ -445,22 +503,37 @@
                 rating: parseInt(ratingInput.value),
                 notes: notesInput.value,
                 coverUrl: coverUrlInput.value.trim(),
-                startDate: startDateInput.value || null, // Data de Início
-                endDate: endDateInput.value || null, // Data de Finalização
-                timestamp: serverTimestamp()
+                startDate: startDateInput.value || null, 
+                endDate: endDateInput.value || null, 
+                timestamp: now, 
             };
 
             try {
-                if (isEditing) {
-                    // FIX: Uso correto da CollectionReference para construir o DocumentReference
-                    const collectionRef = getCollectionRef();
-                    const gameRef = doc(collectionRef, gameIdInput.value); 
-                    await updateDoc(gameRef, gameData);
-                    console.log("Jogo atualizado com sucesso!");
+                if (isLocalDevMode) {
+                    // MODO LOCAL
+                    if (isEditing) {
+                        const index = allGames.findIndex(g => g.id === gameIdInput.value);
+                        if (index !== -1) {
+                            allGames[index] = { id: gameIdInput.value, ...gameData };
+                        }
+                    } else {
+                        gameData.id = Date.now().toString(); 
+                        allGames.push({ id: gameData.id, ...gameData });
+                    }
+                    saveLocalData();
+                    console.log("Jogo salvo localmente com sucesso!");
+
                 } else {
-                    // CREATE
-                    await addDoc(getCollectionRef(), gameData);
-                    console.log("Novo jogo adicionado com sucesso!");
+                    // MODO PROD: Firebase Firestore
+                    if (isEditing) {
+                        const collectionRef = getCollectionRef();
+                        const gameRef = doc(collectionRef, gameIdInput.value); 
+                        await updateDoc(gameRef, { ...gameData, timestamp: serverTimestamp() });
+                        console.log("Jogo atualizado com sucesso no Firebase!");
+                    } else {
+                        await addDoc(getCollectionRef(), { ...gameData, timestamp: serverTimestamp() });
+                        console.log("Novo jogo adicionado com sucesso no Firebase!");
+                    }
                 }
 
                 resetForm();
@@ -470,7 +543,7 @@
             }
         });
 
-        // --- CRUD: READ (onSnapshot) ---
+        // --- CRUD: READ (onSnapshot / LocalData) ---
 
         const subscribeToGames = () => {
             if (unsubscribe) {
@@ -478,27 +551,25 @@
             }
             
             loadingMessage.classList.remove('hidden');
-            gameList.innerHTML = ''; // Limpa a lista antes de carregar
+            gameList.innerHTML = ''; 
 
-            // Ordenamos pelo timestamp para manter a lista estável no Firestore
+            // Apenas para modo PROD (Firebase)
             const gamesQuery = query(getCollectionRef(), orderBy('timestamp', 'desc'));
 
             unsubscribe = onSnapshot(gamesQuery, (snapshot) => {
                 loadingMessage.classList.add('hidden');
                 
                 if (snapshot.empty) {
-                    allGames = []; // Limpa a lista local
+                    allGames = []; 
                     gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Nenhum jogo na sua biblioteca ainda. Adicione o primeiro!</p>`;
                     return;
                 }
 
-                // Armazena todos os jogos no array global
                 allGames = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
                 
-                // Aplica filtro e ordenação atual e renderiza
                 applyFilterAndSortAndRender();
                 
             }, (error) => {
@@ -507,7 +578,7 @@
             });
         };
 
-        // --- Lógica de Filtro e Ordenação Local ---
+        // --- Lógica de Filtro e Ordenação Local (Usada em ambos os modos) ---
 
         const applyFilterAndSortAndRender = () => {
             let filteredGames = [...allGames];
@@ -535,7 +606,6 @@
                 gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Nenhum jogo encontrado com o filtro atual.</p>`;
             } else {
                 filteredGames.forEach(game => {
-                    // Remove o timestamp, que é um objeto complexo, antes de usar JSON.stringify no HTML
                     delete game.timestamp; 
                 });
                 gameList.innerHTML = filteredGames.map(game => createGameCard(game)).join('');
@@ -544,11 +614,9 @@
 
         // --- Configuração dos Botões de Filtro e Ordenação ---
 
-        // Event Listeners para Filtros
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 currentFilter = btn.dataset.filter;
-                // Atualiza o estilo dos botões
                 filterBtns.forEach(b => {
                     const isSelected = b.dataset.filter === currentFilter;
                     b.classList.toggle('bg-indigo-600', isSelected);
@@ -563,11 +631,9 @@
             });
         });
 
-        // Event Listeners para Ordenação
         sortBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 currentSort = btn.dataset.sort;
-                // Atualiza o estilo dos botões
                 sortBtns.forEach(b => {
                     const isSelected = b.dataset.sort === currentSort;
                     b.classList.toggle('bg-indigo-600', isSelected);
@@ -677,24 +743,18 @@
             const target = e.target;
             
             if (target.classList.contains('edit-btn')) {
-                // Ao clicar em Editar, os dados vêm do JSON incorporado no botão
                 const gameData = JSON.parse(target.dataset.game);
                 const id = target.dataset.id;
-                
-                // Preenche o formulário para edição
                 fillFormForEdit(id, gameData);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             
             } else if (target.classList.contains('delete-btn')) {
                 const id = target.dataset.id;
                 const name = target.dataset.name;
-                
-                // Abre o modal de confirmação
                 openDeleteModal(id, name);
             }
         });
         
-        // Preenche o formulário com dados para edição
         const fillFormForEdit = (id, game) => {
             gameIdInput.value = id;
             nameInput.value = game.name;
@@ -712,7 +772,6 @@
             cancelEditBtn.classList.remove('hidden');
         };
 
-        // Reseta o formulário para o estado de "Adicionar Novo Jogo"
         const resetForm = () => {
             gameForm.reset();
             gameIdInput.value = '';
@@ -724,7 +783,6 @@
             searchTip.textContent = "Use o botão de busca para pesquisar a capa no Google. Copie o endereço da imagem e cole acima.";
         };
 
-        // Listener para o botão Cancelar Edição
         cancelEditBtn.addEventListener('click', resetForm);
 
         // --- CRUD: DELETE (Modal Customizado) ---
@@ -747,11 +805,20 @@
         confirmDeleteBtn.addEventListener('click', async () => {
             if (gameToDeleteId && currentUserId) {
                 try {
-                    // FIX: Uso correto da CollectionReference para construir o DocumentReference
-                    const collectionRef = getCollectionRef();
-                    const gameRef = doc(collectionRef, gameToDeleteId);
-                    await deleteDoc(gameRef);
-                    console.log("Jogo excluído com sucesso!");
+                    if (isLocalDevMode) {
+                        // MODO LOCAL
+                        allGames = allGames.filter(game => game.id !== gameToDeleteId);
+                        saveLocalData();
+                        console.log("Jogo excluído localmente com sucesso!");
+
+                    } else {
+                        // MODO PROD
+                        const collectionRef = getCollectionRef();
+                        const gameRef = doc(collectionRef, gameToDeleteId);
+                        await deleteDoc(gameRef);
+                        console.log("Jogo excluído do Firebase com sucesso!");
+                    }
+                    
                     closeDeleteModal();
                     if (gameIdInput.value === gameToDeleteId) {
                         resetForm();
@@ -763,7 +830,7 @@
         });
 
         // --- Inicialização ---
-        setupAuth();
+        initializeAppMode();
     </script>
 </body>
 </html>
