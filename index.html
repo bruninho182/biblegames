@@ -7,7 +7,6 @@
     <!-- Carrega o Tailwind CSS para estilização moderna e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="imagem" sizes="32x32" href="./img/favicon-16x16.png">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -40,8 +39,14 @@
 
     <div class="container-lg mx-auto">
         <header class="text-center mb-8">
-            <!-- MASCOTE ATUALIZADO: Joystick (🕹️) -->
-            <h1 class="text-4xl font-extrabold text-white mb-2">🕹️ Biblioteca de Games</h1>
+            <!-- MASCOTE AGORA É UMA IMAGEM PLACEHOLDER. SUBSTITUA O SRC PELA URL DA SUA IMAGEM (PNG/GIF) -->
+            <h1 class="text-4xl font-extrabold text-white mb-2 flex items-center justify-center">
+                <img id="mascot-img" 
+                     src="img/mascote.png" 
+                     alt="Mascote da Biblioteca" 
+                     class="w-10 h-10 mr-3 rounded-full object-cover">
+                Biblioteca de Games
+            </h1>
             <p id="user-id-display" class="text-sm text-slate-400">ID do Usuário: Carregando...</p>
             <p class="text-lg text-slate-300">Organize, avalie e documente seus jogos.</p>
         </header>
