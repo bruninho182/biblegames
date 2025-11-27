@@ -7,6 +7,7 @@
     <!-- Carrega o Tailwind CSS para estilização moderna e responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="./img/favicon-16x16.png" type="image/x-icon">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -33,6 +34,10 @@
             filter: invert(1); /* Torna o ícone do calendário branco */
             cursor: pointer;
         }
+        /* Permite quebras de linha nas observações do modal */
+        #modal-details-notes {
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8">
@@ -42,7 +47,7 @@
             <!-- MASCOTE AGORA É UMA IMAGEM PLACEHOLDER. SUBSTITUA O SRC PELA URL DA SUA IMAGEM (PNG/GIF) -->
             <h1 class="text-4xl font-extrabold text-white mb-2 flex items-center justify-center">
                 <img id="mascot-img" 
-                     src="img/mascote.png" 
+                     src="./img/mascote.png" 
                      alt="Mascote da Biblioteca" 
                      class="w-10 h-10 mr-3 rounded-full object-cover">
                 Biblioteca de Games
@@ -160,41 +165,85 @@
         </div>
 
         <!-- NOVO BLOCO: Controles de Filtros e Ordenação -->
-        <div class="bg-slate-800 p-4 rounded-xl shadow-2xl mb-6 flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+        <div class="bg-slate-800 p-4 rounded-xl shadow-2xl mb-6 flex flex-col space-y-4">
             
-            <!-- Filtro por Categoria -->
-            <div class="flex flex-wrap items-center">
-                <label class="text-slate-300 text-sm font-medium mr-3 mb-2 md:mb-0 w-full md:w-auto">Filtrar por Categoria:</label>
-                <div class="inline-flex rounded-lg shadow-sm w-full md:w-auto" role="group">
-                    <button type="button" data-filter="Todos" class="filter-btn px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-lg border border-indigo-700 hover:bg-indigo-700 transition-colors">
-                        Todos
-                    </button>
-                    <button type="button" data-filter="Zerado" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border-t border-b border-slate-600 hover:bg-slate-600 transition-colors">
-                        Zerado
-                    </button>
-                    <button type="button" data-filter="Jogando" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border-t border-b border-slate-600 hover:bg-slate-600 transition-colors">
-                        Jogando
-                    </button>
-                    <button type="button" data-filter="Desejo Jogar" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-r-lg border border-slate-600 hover:bg-slate-600 transition-colors">
-                        Desejo Jogar
-                    </button>
-                </div>
+            <!-- Pesquisa Rápida (Nova Seção) -->
+            <div>
+                <label for="search-input" class="block text-sm font-medium text-slate-300 mb-1">Pesquisa Rápida (Nome, Console, Obs)</label>
+                <input type="text" id="search-input" placeholder="Digite para buscar na biblioteca..." class="block w-full rounded-lg border-none bg-slate-700 text-white placeholder-slate-400 p-3 shadow-sm focus:ring-pink-500 focus:border-pink-500">
             </div>
 
-            <!-- Ordenação por Nota -->
-            <div class="flex flex-wrap items-center">
-                <label class="text-slate-300 text-sm font-medium mr-3 mb-2 md:mb-0 w-full md:w-auto">Ordenar por Nota:</label>
-                <div class="inline-flex rounded-lg shadow-sm w-full md:w-auto" role="group">
-                    <button type="button" data-sort="ratingDesc" class="sort-btn px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-lg border border-indigo-700 hover:bg-indigo-700 transition-colors">
-                        Maior Nota
-                    </button>
-                    <button type="button" data-sort="ratingAsc" class="sort-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-r-lg border border-slate-600 hover:bg-slate-600 transition-colors">
-                        Menor Nota
-                    </button>
+            <div class="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+                
+                <!-- Filtro por Categoria (Desktop/Tablet) -->
+                <div class="hidden md:flex flex-wrap items-center">
+                    <label class="text-slate-300 text-sm font-medium mr-3 w-full md:w-auto">Filtrar por Categoria:</label>
+                    <div class="inline-flex rounded-lg shadow-sm w-full md:w-auto" role="group">
+                        <button type="button" data-filter="Todos" class="filter-btn px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-lg border border-indigo-700 hover:bg-indigo-700 transition-colors">
+                            Todos
+                        </button>
+                        <button type="button" data-filter="Zerado" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border-t border-b border-slate-600 hover:bg-slate-600 transition-colors">
+                            Zerado
+                        </button>
+                        <button type="button" data-filter="Jogando" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 border-t border-b border-slate-600 hover:bg-slate-600 transition-colors">
+                            Jogando
+                        </button>
+                        <button type="button" data-filter="Desejo Jogar" class="filter-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-r-lg border border-slate-600 hover:bg-slate-600 transition-colors">
+                            Desejo Jogar
+                        </button>
+                    </div>
                 </div>
+                
+                <!-- Filtro por Categoria (Móvel) -->
+                <div class="md:hidden w-full">
+                    <label for="mobile-filter-category" class="block text-sm font-medium text-slate-300 mb-1">Filtrar por Categoria:</label>
+                    <select id="mobile-filter-category" class="block w-full rounded-lg border-none bg-slate-700 text-white p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="Todos">Todos</option>
+                        <option value="Zerado">Zerado</option>
+                        <option value="Jogando">Jogando</option>
+                        <option value="Desejo Jogar">Desejo Jogar</option>
+                    </select>
+                </div>
+
+                <!-- Ordenação por Nota (Desktop/Tablet) -->
+                <div class="hidden md:flex flex-wrap items-center">
+                    <label class="text-slate-300 text-sm font-medium mr-3 w-full md:w-auto">Ordenar por Nota:</label>
+                    <div class="inline-flex rounded-lg shadow-sm w-full md:w-auto" role="group">
+                        <button type="button" data-sort="ratingDesc" class="sort-btn px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-l-lg border border-indigo-700 hover:bg-indigo-700 transition-colors">
+                            Maior Nota
+                        </button>
+                        <button type="button" data-sort="ratingAsc" class="sort-btn px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-r-lg border border-slate-600 hover:bg-slate-600 transition-colors">
+                            Menor Nota
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ordenação por Nota (Móvel) -->
+                <div class="md:hidden w-full">
+                    <label for="mobile-sort" class="block text-sm font-medium text-slate-300 mb-1">Ordenar por Nota:</label>
+                    <select id="mobile-sort" class="block w-full rounded-lg border-none bg-slate-700 text-white p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="ratingDesc">Maior Nota</option>
+                        <option value="ratingAsc">Menor Nota</option>
+                    </select>
+                </div>
+
             </div>
+
         </div>
         <!-- Fim Controles -->
+        
+        <!-- NOVO: Botões de Exportação e Importação -->
+        <div class="flex flex-col sm:flex-row justify-end mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
+            <!-- Arquivo de Importação (Hidden) -->
+            <input type="file" id="import-file-input" accept=".csv" class="hidden">
+            
+            <button type="button" id="import-btn" class="px-4 py-2 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-700 transition-colors shadow-md">
+                Importar Dados (CSV)
+            </button>
+            <button type="button" id="export-btn" class="px-4 py-2 bg-pink-600 text-white font-bold rounded-lg hover:bg-pink-700 transition-colors shadow-md">
+                Exportar Dados (CSV)
+            </button>
+        </div>
 
         <!-- Lista de Jogos -->
         <div class="bg-slate-900 p-4 md:p-6 rounded-xl shadow-inner">
@@ -217,6 +266,38 @@
             </div>
         </div>
 
+        <!-- Modal de Detalhes do Jogo -->
+        <div id="details-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden p-4">
+            <div class="bg-slate-800 rounded-xl p-6 w-full max-w-lg shadow-2xl border border-indigo-600/50 relative">
+                <button id="close-details-btn" class="absolute top-3 right-3 text-slate-400 hover:text-white text-2xl">
+                    &times;
+                </button>
+                <h3 id="modal-details-title" class="text-2xl font-bold text-white mb-2"></h3>
+                <p id="modal-details-subtitle" class="text-sm text-slate-400 mb-4"></p>
+                
+                <div class="space-y-4 text-slate-300">
+                    <div class="flex justify-between border-b border-slate-700 pb-2">
+                        <span class="font-semibold">Categoria:</span>
+                        <span id="modal-details-category" class="font-bold text-indigo-400"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-700 pb-2">
+                        <span class="font-semibold">Nota:</span>
+                        <span id="modal-details-rating" class="font-bold text-green-400"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-700 pb-2">
+                        <span class="font-semibold">Início:</span>
+                        <span id="modal-details-start-date"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-700 pb-2">
+                        <span class="font-semibold">Fim:</span>
+                        <span id="modal-details-end-date"></span>
+                    </div>
+                    
+                    <h4 class="text-lg font-semibold text-white pt-2 border-t border-slate-700">Observações:</h4>
+                    <p id="modal-details-notes" class="text-slate-300 bg-slate-700 p-3 rounded-lg text-sm italic"></p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase SDK Imports (Module) -->
@@ -312,9 +393,17 @@
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         const userIdDisplay = document.getElementById('user-id-display');
         let loadingMessage = document.getElementById('loading-message');
+        
+        const exportBtn = document.getElementById('export-btn'); 
+        const importBtn = document.getElementById('import-btn'); // NOVO: Botão de Importar
+        const importFileInput = document.getElementById('import-file-input'); // NOVO: Input de Arquivo
+        const searchInput = document.getElementById('search-input'); // NOVO: Input de Pesquisa Rápida
 
-        const filterBtns = document.querySelectorAll('.filter-btn'); // Botões de Filtro
-        const sortBtns = document.querySelectorAll('.sort-btn'); // Botões de Ordenação
+        const mobileFilterCategory = document.getElementById('mobile-filter-category'); 
+        const mobileSort = document.getElementById('mobile-sort'); 
+
+        const filterBtns = document.querySelectorAll('.filter-btn'); 
+        const sortBtns = document.querySelectorAll('.sort-btn'); 
 
         // Elementos do Modal de Exclusão
         const deleteModal = document.getElementById('delete-modal');
@@ -322,11 +411,23 @@
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
         const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
         
+        // Elementos do Modal de Detalhes
+        const detailsModal = document.getElementById('details-modal');
+        const closeDetailsBtn = document.getElementById('close-details-btn');
+        const modalDetailsTitle = document.getElementById('modal-details-title');
+        const modalDetailsSubtitle = document.getElementById('modal-details-subtitle');
+        const modalDetailsCategory = document.getElementById('modal-details-category');
+        const modalDetailsRating = document.getElementById('modal-details-rating');
+        const modalDetailsStartDate = document.getElementById('modal-details-start-date');
+        const modalDetailsEndDate = document.getElementById('modal-details-end-date');
+        const modalDetailsNotes = document.getElementById('modal-details-notes');
+        
         let currentUserId = null;
         let unsubscribe = null; 
         let allGames = []; 
         let currentFilter = 'Todos'; 
         let currentSort = 'ratingDesc'; 
+        let currentSearchTerm = ''; // NOVO: Termo de pesquisa atual
 
         // --- Funções de Ajuda e Configurações ---
         
@@ -584,17 +685,28 @@
             });
         };
 
-        // --- Lógica de Filtro e Ordenação Local (Usada em ambos os modos) ---
+        // --- Lógica de Filtro, Ordenação e Pesquisa (Usada em ambos os modos) ---
 
         const applyFilterAndSortAndRender = () => {
             let filteredGames = [...allGames];
+            const searchTerm = currentSearchTerm.toLowerCase();
 
-            // 1. Aplica Filtragem
+            // 1. Aplica Pesquisa (NOVO)
+            if (searchTerm) {
+                filteredGames = filteredGames.filter(game => 
+                    game.name.toLowerCase().includes(searchTerm) ||
+                    game.console.toLowerCase().includes(searchTerm) ||
+                    game.category.toLowerCase().includes(searchTerm) ||
+                    (game.notes && game.notes.toLowerCase().includes(searchTerm)) // Adiciona verificação de null/undefined para notas
+                );
+            }
+
+            // 2. Aplica Filtragem
             if (currentFilter !== 'Todos') {
                 filteredGames = filteredGames.filter(game => game.category === currentFilter);
             }
 
-            // 2. Aplica Ordenação
+            // 3. Aplica Ordenação
             filteredGames.sort((a, b) => {
                 if (currentSort === 'ratingDesc') {
                     // Maior Nota primeiro
@@ -607,9 +719,9 @@
                 return a.name.localeCompare(b.name);
             });
 
-            // 3. Renderiza
+            // 4. Renderiza
             if (filteredGames.length === 0) {
-                gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Nenhum jogo encontrado com o filtro atual.</p>`;
+                gameList.innerHTML = `<p class="text-slate-400 text-center py-8">Nenhum jogo encontrado com os filtros e termo de pesquisa atuais.</p>`;
             } else {
                 filteredGames.forEach(game => {
                     delete game.timestamp; 
@@ -620,9 +732,11 @@
 
         // --- Configuração dos Botões de Filtro e Ordenação ---
 
+        // Configuração para botões de DESKTOP
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 currentFilter = btn.dataset.filter;
+                mobileFilterCategory.value = currentFilter; // Sincroniza o mobile
                 filterBtns.forEach(b => {
                     const isSelected = b.dataset.filter === currentFilter;
                     b.classList.toggle('bg-indigo-600', isSelected);
@@ -640,6 +754,7 @@
         sortBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 currentSort = btn.dataset.sort;
+                mobileSort.value = currentSort; // Sincroniza o mobile
                 sortBtns.forEach(b => {
                     const isSelected = b.dataset.sort === currentSort;
                     b.classList.toggle('bg-indigo-600', isSelected);
@@ -653,8 +768,257 @@
                 applyFilterAndSortAndRender();
             });
         });
+        
+        // Configuração para dropdowns MOBILE
+        mobileFilterCategory.addEventListener('change', (e) => {
+            currentFilter = e.target.value;
+            // Desativa a seleção do desktop para não haver conflito visual
+            filterBtns.forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-700');
+                b.classList.add('bg-slate-700', 'text-slate-300', 'border-slate-600');
+            });
+            applyFilterAndSortAndRender();
+        });
 
-        // --- Renderização da Interface ---
+        mobileSort.addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            // Desativa a seleção do desktop para não haver conflito visual
+            sortBtns.forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-700');
+                b.classList.add('bg-slate-700', 'text-slate-300', 'border-slate-600');
+            });
+            applyFilterAndSortAndRender();
+        });
+        
+        // Listener para o NOVO campo de pesquisa (Busca em tempo real)
+        searchInput.addEventListener('input', (e) => {
+            currentSearchTerm = e.target.value.trim();
+            applyFilterAndSortAndRender();
+        });
+
+
+        // --- Lógica de Exportação (CSV) ---
+
+        const convertToCSV = (objArray) => {
+            // Definir as chaves que serão usadas como cabeçalho
+            const header = ['Nome', 'Console', 'Categoria', 'Nota', 'Início', 'Fim', 'Observações', 'URL da Capa'];
+            const dataKeys = ['name', 'console', 'category', 'rating', 'startDate', 'endDate', 'notes', 'coverUrl'];
+            
+            let csv = header.join(';') + '\n';
+
+            objArray.forEach(row => {
+                let line = dataKeys.map(key => {
+                    let val = row[key] !== null && row[key] !== undefined ? String(row[key]) : '';
+                    // Substitui quebras de linha e pontos e vírgulas para não quebrar o formato CSV
+                    val = val.replace(/"/g, '""').replace(/\n/g, ' ').replace(/;/g, ','); 
+                    
+                    // Adiciona aspas se o valor contiver separadores (vírgula ou ponto e vírgula)
+                    if (val.includes(',') || val.includes(';')) {
+                        val = `"${val}"`;
+                    }
+                    return val;
+                }).join(';');
+                csv += line + '\n';
+            });
+
+            return csv;
+        };
+        
+        const exportData = () => {
+            if (allGames.length === 0) {
+                // Mensagem de erro temporária no console de carregamento
+                showTempMessage("Não há dados para exportar!", 'red');
+                return;
+            }
+
+            // Aplicar filtros, ordenação e PESQUISA na lista a ser exportada
+            let gamesToExport = [...allGames];
+            const searchTerm = currentSearchTerm.toLowerCase();
+
+            // 1. Aplica Pesquisa (Igual a applyFilterAndSortAndRender)
+            if (searchTerm) {
+                gamesToExport = gamesToExport.filter(game => 
+                    game.name.toLowerCase().includes(searchTerm) ||
+                    game.console.toLowerCase().includes(searchTerm) ||
+                    game.category.toLowerCase().includes(searchTerm) ||
+                    (game.notes && game.notes.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // 2. Filtragem
+            if (currentFilter !== 'Todos') {
+                gamesToExport = gamesToExport.filter(game => game.category === currentFilter);
+            }
+            
+            // 3. Ordenação
+            gamesToExport.sort((a, b) => {
+                if (currentSort === 'ratingDesc') return b.rating - a.rating;
+                if (currentSort === 'ratingAsc') return a.rating - b.rating;
+                return a.name.localeCompare(b.name);
+            });
+
+            if (gamesToExport.length === 0) {
+                showTempMessage("Nenhum jogo corresponde aos filtros e pesquisa atuais para exportação.", 'red');
+                return;
+            }
+
+            const csvContent = convertToCSV(gamesToExport);
+            // Cria um Blob para o conteúdo CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            // Configurar o nome do arquivo e link
+            const date = new Date().toISOString().slice(0, 10);
+            link.download = `biblioteca_games_export_${date}.csv`;
+            link.href = URL.createObjectURL(blob);
+            
+            // Disparar o download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showTempMessage(`Exportação concluída! ${gamesToExport.length} jogos exportados.`, 'green');
+        };
+        
+        // Listener para o botão de exportação
+        exportBtn.addEventListener('click', exportData);
+
+        // --- Lógica de Importação (CSV) ---
+        
+        const parseCSV = (csvText) => {
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+            if (lines.length === 0) return [];
+
+            const headerLine = lines[0];
+            const dataLines = lines.slice(1);
+
+            // Cabeçalhos esperados (para validação e mapeamento)
+            const expectedHeaders = ['Nome', 'Console', 'Categoria', 'Nota', 'Início', 'Fim', 'Observações', 'URL da Capa'];
+            
+            // Chaves internas para mapeamento
+            const dataKeys = ['name', 'console', 'category', 'rating', 'startDate', 'endDate', 'notes', 'coverUrl'];
+
+            // Validação simples: verifica se a primeira linha (cabeçalhos) contém os campos essenciais.
+            const headers = headerLine.split(';'); 
+            if (headers.length !== expectedHeaders.length || !headers.every((h, i) => h.trim() === expectedHeaders[i])) {
+                throw new Error("Formato de arquivo inválido. O cabeçalho do CSV deve corresponder ao formato de exportação.");
+            }
+
+            return dataLines.map(line => {
+                // Esta é uma análise de CSV simplificada que assume que o delimitador é ';' 
+                // e que os valores escapados com aspas duplas foram tratados corretamente na exportação/importação.
+                const values = line.split(';'); 
+                if (values.length !== dataKeys.length) {
+                    // Ignora linhas incompletas
+                    return null; 
+                }
+
+                let game = {};
+                values.forEach((v, i) => {
+                    let value = v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'); // Remove aspas externas e des-escapa aspas internas
+                    const key = dataKeys[i];
+
+                    // Garante o tipo correto para 'rating'
+                    if (key === 'rating') {
+                        game[key] = parseInt(value) || 0; // Se não for número, define como 0
+                    } else if (key === 'startDate' || key === 'endDate') {
+                        game[key] = value || null;
+                    } else {
+                        game[key] = value;
+                    }
+                });
+                
+                // Adiciona um ID temporário/novo para a importação (chave do localStorage)
+                game.id = Date.now().toString() + Math.random().toString(36).substring(2, 7); 
+                
+                return game;
+            }).filter(game => game !== null);
+        };
+
+
+        const handleImport = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!currentUserId) {
+                showTempMessage("Operação negada: Modo Local não inicializado.", 'red');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const importedGames = parseCSV(event.target.result);
+                    
+                    if (importedGames.length === 0) {
+                        showTempMessage("Arquivo importado não contém jogos válidos.", 'red');
+                        return;
+                    }
+
+                    if (isLocalDevMode) {
+                        // MODO LOCAL: Apenas adiciona os jogos à lista existente
+                        allGames.push(...importedGames);
+                        saveLocalData();
+                        showTempMessage(`Sucesso! ${importedGames.length} jogos importados (salvos localmente).`, 'green');
+
+                    } else {
+                        // MODO PROD: Salva cada jogo no Firestore (requer loop assíncrono)
+                        let count = 0;
+                        for (const game of importedGames) {
+                            try {
+                                // Remove o ID temporário do CSV antes de salvar
+                                const { id, ...dataToSave } = game; 
+                                await addDoc(getCollectionRef(), { ...dataToSave, timestamp: serverTimestamp() });
+                                count++;
+                            } catch (err) {
+                                console.error(`Falha ao salvar jogo importado ${game.name}:`, err);
+                            }
+                        }
+                        showTempMessage(`Sucesso! ${count} jogos importados para o Firebase.`, 'green');
+                    }
+                    
+                } catch (error) {
+                    console.error("Erro durante a importação do CSV:", error);
+                    showTempMessage(error.message || "Erro desconhecido ao processar o arquivo.", 'red');
+                } finally {
+                    // Limpa o input file para que o evento 'change' dispare novamente com o mesmo arquivo
+                    e.target.value = null; 
+                }
+            };
+            
+            reader.readAsText(file);
+        };
+        
+        importBtn.addEventListener('click', () => {
+            importFileInput.click(); // Dispara o clique no input de arquivo oculto
+        });
+        
+        importFileInput.addEventListener('change', handleImport);
+
+        // Função de Mensagem Temporária (Substitui o loading-message por um feedback)
+        const showTempMessage = (message, type = 'slate') => {
+            const messageEl = document.getElementById('loading-message');
+            messageEl.classList.remove('hidden', 'text-red-400', 'text-green-400', 'text-slate-400');
+            
+            switch(type) {
+                case 'red':
+                    messageEl.classList.add('text-red-400', 'font-bold');
+                    break;
+                case 'green':
+                    messageEl.classList.add('text-green-400', 'font-bold');
+                    break;
+                default:
+                    messageEl.classList.add('text-slate-400');
+            }
+            messageEl.textContent = message;
+
+            setTimeout(() => {
+                messageEl.classList.add('hidden');
+                messageEl.classList.remove('font-bold');
+            }, 5000);
+        }
+
+        // --- Renderização da Interface (Continua o mesmo) ---
 
         const createGameCard = (game) => {
             const id = game.id;
@@ -719,7 +1083,7 @@
                         </div>
                         
                         <!-- Bloco de Avaliação e Ações -->
-                        <div class="flex-shrink-0 w-full md:w-56 space-y-2 md:ml-4">
+                        <div class="flex-shrink-0 w-full md:w-64 space-y-2 md:ml-4">
                             <!-- Visualização da Nota -->
                             <div class="flex items-center justify-between text-white text-sm font-semibold">
                                 <span>Nota:</span>
@@ -731,6 +1095,9 @@
 
                             <!-- Botões de Ação -->
                             <div class="flex space-x-2 pt-2 justify-end">
+                                <button data-game='${JSON.stringify(game)}' class="show-details-btn px-3 py-1 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors">
+                                    Detalhes
+                                </button>
                                 <button data-id="${id}" data-game='${JSON.stringify(game)}' class="edit-btn px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
                                     Editar
                                 </button>
@@ -744,7 +1111,7 @@
             `;
         };
 
-        // Adiciona listeners aos botões de Editar e Excluir
+        // Adiciona listeners aos botões de Editar, Excluir e DETALHES
         gameList.addEventListener('click', (e) => {
             const target = e.target;
             
@@ -758,6 +1125,10 @@
                 const id = target.dataset.id;
                 const name = target.dataset.name;
                 openDeleteModal(id, name);
+            } else if (target.classList.contains('show-details-btn')) {
+                // NOVO: Abre o modal de detalhes
+                const gameData = JSON.parse(target.dataset.game);
+                openDetailsModal(gameData);
             }
         });
         
@@ -815,14 +1186,14 @@
                         // MODO LOCAL
                         allGames = allGames.filter(game => game.id !== gameToDeleteId);
                         saveLocalData();
-                        console.log("Jogo excluído localmente com sucesso!");
+                        showTempMessage("Jogo excluído localmente com sucesso!", 'green');
 
                     } else {
                         // MODO PROD
                         const collectionRef = getCollectionRef();
                         const gameRef = doc(collectionRef, gameToDeleteId);
                         await deleteDoc(gameRef);
-                        console.log("Jogo excluído do Firebase com sucesso!");
+                        showTempMessage("Jogo excluído do Firebase com sucesso!", 'green');
                     }
                     
                     closeDeleteModal();
@@ -831,9 +1202,46 @@
                     }
                 } catch (error) {
                     console.error("Erro ao excluir o jogo:", error);
+                    showTempMessage(`Erro ao excluir o jogo: ${error.message}`, 'red');
                 }
             }
         });
+        
+        // --- Funções do Modal de Detalhes ---
+        
+        const openDetailsModal = (game) => {
+            modalDetailsTitle.textContent = game.name;
+            
+            const consoleIcon = consoleIcons[game.console] || consoleIcons['Outro'];
+            modalDetailsSubtitle.innerHTML = `
+                <span class="text-lg mr-1 align-middle">${consoleIcon}</span>
+                ${game.console}
+            `;
+            
+            // Formatando a cor da nota
+            const ratingColor = game.rating >= 8 ? 'text-green-400' : game.rating >= 5 ? 'text-yellow-400' : 'text-red-400';
+            
+            modalDetailsCategory.textContent = game.category;
+            modalDetailsRating.innerHTML = `<span class="${ratingColor}">${game.rating}/10</span>`;
+            modalDetailsStartDate.textContent = game.startDate || 'Não registrado';
+            modalDetailsEndDate.textContent = game.endDate || 'Não registrado';
+            
+            // Usamos textContent e pre-wrap no CSS para formatar as observações longas
+            modalDetailsNotes.textContent = game.notes || 'Nenhuma observação detalhada registrada.';
+            
+            detailsModal.classList.remove('hidden');
+        };
+
+        const closeDetailsModal = () => {
+            detailsModal.classList.add('hidden');
+        };
+        
+        // Listener para fechar o modal ao clicar no botão 'X' ou fora do conteúdo
+        closeDetailsBtn.addEventListener('click', closeDetailsModal);
+        detailsModal.addEventListener('click', (e) => {
+            if (e.target === detailsModal) closeDetailsModal();
+        });
+
 
         // --- Inicialização ---
         initializeAppMode();
